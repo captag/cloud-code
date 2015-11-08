@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <meta charset="utf-8">
+  <title>Captag - Tag Template Creator</title>
+  <link href="/assets/font/stylesheet.css" rel="stylesheet">
+
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script type="text/javascript" src="//www.parsecdn.com/js/parse-1.6.7.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+
+  <script type="text/javascript" src="/parse.js"></script>
+
+  <style>
+    body,
+    html {
+      margin: 0px;
+      padding: 0px;
+      width: 330px;
+      font-family: 'denseregular';
+    }
+
+    .qr-label {
+      padding: 20px 0px;
+      page-break-after: always;
+    }
+
+    .logo {
+      width: 300px;
+      padding: 20px;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .qrcode table {
+      margin: 20px auto;
+    }
+
+    .tag-label {
+      margin-top: 40px;
+      font-size: 26px;
+      text-align: center;
+    }
+
+    .cordinates {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+  <div id="qr-codes"></div>
+
+  <script>
+    $.urlParam = function(name) {
+      var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+      if (results == null) {
+        return null;
+      } else {
+        return results[1] || 0;
+      }
+    }
+
+    $(document).ready(function() {
+      var game = $.urlParam('game');
+
+      var query = new Parse.Query(GameObject);
+      query.get(game, {
+        success: function(currentGame) {
+          // The object was retrieved successfully.
+          if (currentGame) {
+            var query = new Parse.Query(TagObject);
+            query.equalTo("game", currentGame);
+            query.find({
+              success: function(gameTags) {
+                console.log('Found tags: ' + gameTags.length);
+                gameTags.forEach(function(tag) {
+                  var html = '<div class="qr-label">';
+                  html += '<img class="logo" src="/assets/logo.svg"/>';
+                  html += '<div class="qrcode qr-' + tag.id + '"></div>';
+                  html += '<div class="tag-label">' + tag.get("label") + '</div>';
+                  var geoPoint = tag.get("geoPoint");
+                  html += '<div class="cordinates">LAT: ' + geoPoint.latitude + ' - LONG: ' + geoPoint.longitude + '</div>';
+                  html += '</div>';
+                  $('#qr-codes').append(html);
+                  $('.qr-' + tag.id).qrcode({
+                    "render": "div",
+                    "size": 100,
+                    "color": "#3a3",
+                    "text": tag.id,
+                    "image": "/assets/logo.svg"
+                  });
+                });
+              }
+            });
+          }
+        },
+        error: function(object, error) {
+          // The object was not retrieved successfully.
+          // error is a Parse.Error with an error code and message.
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>

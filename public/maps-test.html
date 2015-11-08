@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Polygon Arrays</title>
+    <style>
+      html, body, #map-canvas, #address-form {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+      #map-canvas, #address-form {
+	      width: 49%;
+	      display: inline-block;
+	      vertical-align: top;
+      }
+      .labels {
+	     color: red;
+	     background-color: white;
+	     font-family: "Lucida Grande", "Arial", sans-serif;
+	     font-size: 10px;
+	     font-weight: bold;
+	     text-align: center;
+	     width: 65px;     
+	     border: 2px solid black;
+	     white-space: nowrap;
+	   }
+    </style>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
+    <script type="text/javascript" src="http://google-maps-utility-library-v3.googlecode.com/svn/tags/markerwithlabel/1.1.5/src/markerwithlabel_packed.js"></script>
+    <script>
+		// This example creates a simple polygon representing the Bermuda Triangle.
+		// When the user clicks on the polygon an info window opens, showing
+		// information about the polygon's coordinates.
+		
+		var map;
+		var polygons = {};
+		var markers = [];
+		var infoWindow;
+		var mapCenter = new google.maps.LatLng(47.66481, 9.18122);
+		var tempCoords = null;
+		
+		function initialize() {
+		  var mapOptions = {
+		    zoom: 12,
+		    center: mapCenter,
+		    mapTypeId: google.maps.MapTypeId.TERRAIN
+		  };
+		  map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+		
+		  // Define the LatLng coordinates for the polygon.
+		  var midtownCoords = [
+		      new google.maps.LatLng(47.67007, 9.16303),
+		      new google.maps.LatLng(47.66955, 9.16998),
+		      new google.maps.LatLng(47.66735, 9.17607),
+		      new google.maps.LatLng(47.66481, 9.18122),
+		      new google.maps.LatLng(47.66053, 9.18191),
+		      new google.maps.LatLng(47.65672, 9.18234),
+		      new google.maps.LatLng(47.65568, 9.18251),
+		      new google.maps.LatLng(47.65345, 9.1759),
+		      new google.maps.LatLng(47.65462, 9.17012),
+		      new google.maps.LatLng(47.66261, 9.15891),
+		      new google.maps.LatLng(47.66758, 9.15462)
+		  ];
+		  
+		  var rightSideCoords = [];
+		  	tempCoords = "9.188004,47.699249 \
+			9.166203,47.680761 \
+			9.172726,47.677409 \
+			9.169292,47.670127 \
+			9.172211,47.668740 \
+			9.182167,47.664809 \
+			9.196587,47.664231 \
+			9.208431,47.662035 \
+			9.220963,47.665156 \
+			9.218903,47.674173 \
+			9.213924,47.685961 \
+			9.203110,47.694512 \
+			9.204998,47.708029 \
+			9.192295,47.710570 \
+			9.183884,47.705488 \
+			9.187489,47.699365";
+			stringToCoords(tempCoords, rightSideCoords);
+		  
+		  	var leftSideCoords = [];
+			tempCoords = "9.171181,47.669665 \
+			9.157448,47.669433 \
+			9.146976,47.666775 \
+			9.140797,47.664347 \
+			9.137878,47.664231 \
+			9.117451,47.669433 \
+			9.103203,47.692663 \
+			9.103546,47.698325 \
+			9.112988,47.704217 \
+			9.126549,47.703639 \
+			9.150581,47.700520 \
+			9.166031,47.694166 \
+			9.180107,47.688504 \
+			9.171696,47.680299 \
+			9.176159,47.678680 \
+			9.171352,47.669549";
+			stringToCoords(tempCoords, leftSideCoords);
+		  
+		  // Construct the polygon.
+		  polygons["midtownPolygon"] = new google.maps.Polygon({
+		    paths: midtownCoords,
+		    strokeColor: '#FF0000',
+		    strokeOpacity: 0.8,
+		    strokeWeight: 3,
+		    fillColor: '#FF0000',
+		    fillOpacity: 0.35,
+		    map: map
+		  });
+		  
+		  polygons["rightSidePolygon"] = new google.maps.Polygon({
+		    paths: rightSideCoords,
+		    strokeColor: '#00FF00',
+		    strokeOpacity: 0.8,
+		    strokeWeight: 3,
+		    fillColor: '#00FF00',
+		    fillOpacity: 0.35,
+		    map: map
+		  });
+		  
+		  polygons["leftSidePolygon"] = new google.maps.Polygon({
+		    paths: leftSideCoords,
+		    strokeColor: '#0000FF',
+		    strokeOpacity: 0.8,
+		    strokeWeight: 3,
+		    fillColor: '#0000FF',
+		    fillOpacity: 0.35,
+		    map: map
+		  });
+		
+		  for(var key in polygons) {
+			addMarkerToPolygon(key);
+		  }
+		}
+		google.maps.event.addDomListener(window, 'load', initialize);
+		
+		/**
+		 * Get polygon coordinates from http://www.birdtheme.org/useful/v3tool.html
+		 */
+		function stringToCoords(coords, polygonCoords) {
+			var cords = coords.split(" ");
+			for(var key in cords) {
+				var temp = cords[key].split(",");
+				polygonCoords.push(new google.maps.LatLng(temp[1],temp[0]));
+			}
+		}
+		
+		function addMarkerToPolygon(key) {
+			var marker = new MarkerWithLabel({
+		      position: new google.maps.LatLng(0,0),
+		      draggable: false,
+		      raiseOnDrag: false,
+		      map: map,
+		      labelContent: key,
+		      labelAnchor: new google.maps.Point(30, 20),
+		      labelClass: "labels", // the CSS class for the label
+		      labelStyle: {opacity: 1.0},
+		      icon: "http://placehold.it/1x1",
+		      visible: false
+		    });
+	      google.maps.event.addListener(polygons[key], "mousemove", function(event) {
+	        marker.setPosition(event.latLng);
+	        marker.setVisible(true);
+	      });
+	      google.maps.event.addListener(polygons[key], "mouseout", function(event) {
+	        marker.setVisible(false);
+	      });
+		}
+		  
+		// Sets the map on all markers in the array.
+		function removeMarkers() {
+		  for (var i = 0; i < markers.length; i++) {
+		    markers[i].setMap(null);
+		  }
+		}
+    </script>
+    <script>
+	// Find address on polygon 
+	function findAddressPolygon() {
+		var geocoder = new google.maps.Geocoder();
+		var address = $('#addressText').val();
+		geocoder.geocode( { 'address': address}, function(results, status) {
+		
+		  if (status == google.maps.GeocoderStatus.OK) {
+		    var latitude = results[0].geometry.location.lat();
+		    var longitude = results[0].geometry.location.lng();
+		    var point = new google.maps.LatLng(latitude, longitude);
+		    var foundPolygon = false;
+		    var pointPolygons = "";
+		    for(var key in polygons) {
+			    console.log(key);
+			    foundPolygon =  google.maps.geometry.poly.containsLocation(point, polygons[key]);
+			    if(foundPolygon===true) {
+				    pointPolygons += key+",";
+			    }
+			    removeMarkers();
+			    var marker = new google.maps.Marker({
+			      position: point,
+			      map: map,
+			      title: address
+			    });
+			    markers.push(marker);
+		    }
+		    
+		    $('#result').html(pointPolygons+":"+latitude+","+longitude);
+		  } 
+		}); 
+	}   
+	</script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+    <div id="address-form">
+	    <p>Insert address:</p>
+	    <textarea id="addressText">schneckenburgstr 52 78467 konstanz</textarea>
+	    <input type="button" onclick="findAddressPolygon()" value="Find polygon"/>
+	    <hr/>
+	    <p>Result:</p>
+	    <div id="result">...</div>
+  </body>
+</html>

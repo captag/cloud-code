@@ -1,0 +1,10 @@
+{
+  "applications": {
+    "CAPTAG": {
+      "applicationId": "VeEodLh11HU4otvwIHpl3slzqN21jYFRefHMQPvp"
+    },
+    "_default": {
+      "link": "CAPTAG"
+    }
+  }
+}

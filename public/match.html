@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <meta charset="utf-8">
+  <title>Captag - Tag Template Creator</title>
+
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+  <link href="//cdn.datatables.net/1.10.9/css/jquery.dataTables.min.css" rel="stylesheet" crossorigin="anonymous">
+  <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.min.css" rel="stylesheet" />
+  <link href="/styles.css" rel="stylesheet">
+
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha256-Sk3nkD6mLTMOF0EOpNtsIry+s1CsaqQC1rVLTAy+0yc= sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ=="></script>
+  <script type="text/javascript" src="//www.parsecdn.com/js/parse-1.6.7.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/async/1.5.0/async.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+
+  <script type="text/javascript" src="/parse.js"></script>
+
+</head>
+
+
+<body>
+
+  <div id="map"></div>
+  <!-- /container -->
+
+  <script>
+    var game;
+    var map;
+    var markers = [];
+    var newMarkers = [];
+
+    function playerPinSymbol(color, size) {
+      return {
+        path: 'M130,118c-6.62,0-12,5.38-12,12c0,3.18,1.23,6.18,3.47,8.44c2.27,2.3,5.3,3.56,8.53,3.56c3.23,0,6.27-1.27,8.54-3.57c2.229-2.26,3.46-5.26,3.46-8.43C142,123.38,136.62,118,130,118z M130,123.969c-0.063,0,0.166,17.03,0.104,17.029c-2.669-0.045-5.47-1.05-7.443-2.828c1.02-0.56,2.53-1.11,4-1.64c0.51-0.19,1.02-0.38,1.52-0.561c0.19-0.08,0.32-0.26,0.32-0.47V133c0-0.21-0.14-0.4-0.33-0.47c-0.05-0.021-1.17-0.46-1.17-2.53c0-0.28-0.21-0.49-0.48-0.49c-0.05-0.04-0.14-0.22-0.14-0.51s0.09-0.47,0.12-0.5c0.28,0,0.5-0.22,0.5-0.5c0-0.12-0.04-0.26-0.12-0.54c-0.14-0.53-0.53-1.92-0.19-2.37c0.04-0.05,0.24-0.19,0.71-0.1c0.26,0.05,0.52-0.11,0.58-0.37c0.17-0.65,1.33-1.12,2.77-1.12c1.44,0,2.6,0.47,2.76,1.12c0.24,0.92-0.17,2.19-0.37,2.8c-0.1,0.3-0.14,0.44-0.14,0.58c0,0.28,0.21,0.49,0.48,0.49c0.05,0.04,0.14,0.22,0.14,0.51s-0.09,0.47-0.12,0.5c-0.28,0-0.5,0.22-0.5,0.5c0,2.07-1.12,2.51-1.16,2.53c-0.2,0.06-0.34,0.26-0.34,0.47v2.5c0,0.21,0.13,0.39,0.32,0.47c0.55,0.2,1.1,0.4,1.63,0.59c1.51,0.551,2.93,1.07,3.91,1.601c-1.992,1.796-4.565,2.801-7.257,2.838C130.052,140.999,130.052,123.969,130,123.969z',
+        fillColor: '#fff',
+        fillOpacity: 1,
+        strokeColor: color,
+        strokeWeight: 4,
+        scale: size,
+      };
+    }
+
+    function tagPinSymbol(color, size) {
+      return {
+        path: 'm239.5,219c0,-36.18785 29.31216,-65.5 65.5,-65.5c36.18784,0 65.5,29.31215 65.5,65.5c0,36.18785 -29.31216,65.5 -65.5,65.5c-36.18784,0 -65.5,-29.31215 -65.5,-65.5z',
+        fillColor: color,
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 3,
+        scale: size,
+      };
+    }
+
+    function initAutocomplete() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: {
+          lat: 48.78988199,
+          lng: 9.21030192
+        },
+        maxZoom: 17,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      });
+
+      map.setOptions({
+        styles: [{
+          "featureType": "all",
+          "elementType": "labels.text.fill",
+          "stylers": [{
+            "saturation": 36
+          }, {
+            "color": "#ff1c00"
+          }, {
+            "lightness": 40
+          }]
+        }, {
+          "featureType": "all",
+          "elementType": "labels.text.stroke",
+          "stylers": [{
+            "visibility": "on"
+          }, {
+            "color": "#000000"
+          }, {
+            "lightness": 16
+          }]
+        }, {
+          "featureType": "all",
+          "elementType": "labels.icon",
+          "stylers": [{
+            "visibility": "off"
+          }]
+        }, {
+          "featureType": "administrative",
+          "elementType": "geometry.fill",
+          "stylers": [{
+            "color": "#f13f4d"
+          }, {
+            "lightness": 20
+          }, {
+            "saturation": "0"
+          }]
+        }, {
+          "featureType": "administrative",
+          "elementType": "geometry.stroke",
+          "stylers": [{
+            "color": "#f13f4d"
+          }, {
+            "lightness": 17
+          }, {
+            "weight": 1.2
+          }, {
+            "saturation": "0"
+          }]
+        }, {
+          "featureType": "landscape",
+          "elementType": "geometry",
+          "stylers": [{
+            "lightness": 20
+          }, {
+            "color": "#383838"
+          }]
+        }, {
+          "featureType": "poi",
+          "elementType": "geometry",
+          "stylers": [{
+            "color": "#000000"
+          }, {
+            "lightness": 21
+          }]
+        }, {
+          "featureType": "road.highway",
+          "elementType": "geometry.fill",
+          "stylers": [{
+            "color": "#000000"
+          }, {
+            "lightness": 17
+          }]
+        }, {
+          "featureType": "road.highway",
+          "elementType": "geometry.stroke",
+          "stylers": [{
+            "color": "#000000"
+          }, {
+            "lightness": 29
+          }, {
+            "weight": 0.2
+          }]
+        }, {
+          "featureType": "road.arterial",
+          "elementType": "geometry",
+          "stylers": [{
+            "color": "#000000"
+          }, {
+            "lightness": 18
+          }]
+        }, {
+          "featureType": "road.local",
+          "elementType": "geometry",
+          "stylers": [{
+            "color": "#f13f4d"
+          }, {
+            "lightness": 16
+          }, {
+            "saturation": "0"
+          }]
+        }, {
+          "featureType": "transit",
+          "elementType": "geometry",
+          "stylers": [{
+            "lightness": 19
+          }, {
+            "color": "#404040"
+          }]
+        }, {
+          "featureType": "water",
+          "elementType": "geometry",
+          "stylers": [{
+            "color": "#000000"
+          }, {
+            "lightness": 17
+          }]
+        }]
+      });
+    }
+
+
+    $.urlParam = function(name) {
+      var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+      if (results == null) {
+        return null;
+      } else {
+        return results[1] || 0;
+      }
+    }
+
+    function loadMap() {
+      console.log('Loading map: ' + new Date());
+      setTimeout(function() {
+        loadMap();
+      }, 5000);
+
+      var bounds = new google.maps.LatLngBounds();
+      var markersData = [];
+
+      async.parallel([
+        function(callback) {
+          // Players
+          var query = new Parse.Query(PlayerObject);
+          query.equalTo("game", game);
+          query.include('team');
+          query.find({
+            success: function(players) {
+              async.each(players, function(player, cb) {
+                var geoPoint = player.get('geoPoint');
+                if (geoPoint) {
+                  // Create a marker for each place.
+                  markersData.push({
+                    map: map,
+                    icon: playerPinSymbol(player.get('team').get('color'), 1.1),
+                    title: player.id,
+                    position: {
+                      lat: geoPoint.latitude,
+                      lng: geoPoint.longitude
+                    }
+                  });
+                  cb();
+                } else {
+                  cb();
+                }
+              }, function(err) {
+                console.log('Finish 1!');
+                callback();
+              });
+            }
+          });
+        },
+        function(callback) {
+          // Tags
+          var query = new Parse.Query(TagObject);
+          query.equalTo("game", game);
+          query.include(["player", "team"]);
+          query.find({
+            success: function(tags) {
+              async.each(tags, function(tag, cb) {
+                var geoPoint = tag.get('geoPoint');
+                if (geoPoint) {
+                  // Create a marker for each place.
+                  var icon = tagPinSymbol("#FFFFFF", 0.1);
+                  if (tag.get('team'))
+                    icon = tagPinSymbol(tag.get('team').get('color'), 0.1);
+                  markersData.push({
+                    map: map,
+                    icon: icon,
+                    title: tag.get('label'),
+                    position: {
+                      lat: geoPoint.latitude,
+                      lng: geoPoint.longitude
+                    }
+                  });
+                  cb();
+                } else {
+                  cb();
+                }
+              }, function(err) {
+                console.log('Finish 2!');
+                callback();
+              });
+            }
+          });
+        }
+      ], function(err) {
+        console.log('Finish!');
+        markersData.forEach(function(markerData) {
+          var marker = new google.maps.Marker(markerData);
+          newMarkers.push(marker);
+          bounds.extend(marker.getPosition());
+        });
+        markers.forEach(function(marker) {
+          marker.setMap(null);
+        });
+        markers = newMarkers;
+        newMarkers = [];
+        map.fitBounds(bounds);
+      });
+    }
+
+    $(document).ready(function() {
+      game = $.urlParam('game');
+      var query = new Parse.Query(GameObject);
+      query.get(game, {
+        success: function(currentGame) {
+          // The object was retrieved successfully.
+          if (currentGame) {
+            console.log("Game: " + currentGame);
+            game = currentGame;
+            loadMap();
+          }
+        },
+        error: function(object, error) {
+          // The object was not retrieved successfully.
+          // error is a Parse.Error with an error code and message.
+        }
+      });
+    });
+  </script>
+
+  <script type="text/javascript" src="//google-maps-utility-library-v3.googlecode.com/svn/tags/markerwithlabel/1.1.5/src/markerwithlabel_packed.js"></script>
+  <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&signed_in=true&libraries=places&callback=initAutocomplete" async></script>
+
+</body>
+
+</html>
